@@ -1,5 +1,8 @@
 # go-fasttext
 
+> [!NOTE]
+> This project only binds the fastText `predict` / `predictLine` APIs.
+
 Go bindings for [fastText](https://github.com/facebookresearch/fastText) language identification via a thin C wrapper and CGO.
 
 ## Requirements
@@ -41,7 +44,7 @@ import (
 	"fmt"
 	"log"
 
-	gofasttext "go-fasttext"
+	gofasttext "github.com/kznLeaf/go-fasttext"
 )
 
 func main() {
