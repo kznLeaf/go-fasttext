@@ -1,3 +1,10 @@
+// Package gofasttext wraps Facebook's fastText for language identification via CGO.
+//
+// Call LoadModel once with a supervised LID model (for example lid.176.ftz),
+// then Predict to get the top-1 language code (without the "__label__" prefix)
+// and its confidence. Close frees the loaded model.
+//
+// Build the native library with `make lib` before using or testing this package.
 package gofasttext
 
 /*
