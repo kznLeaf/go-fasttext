@@ -2,11 +2,14 @@
 
 CXX ?= c++
 AR ?= ar
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
 CXXFLAGS ?= -std=c++17 -O3 -fPIC -pthread -funroll-loops
 CXXFLAGS += -IfastText/src -Icwrapper
 
 BUILD_DIR := build
 OBJ_DIR := $(BUILD_DIR)/obj
+LIB_INSTALL_DIR := libs/$(GOOS)_$(GOARCH)
 
 FT_SRCS := $(filter-out fastText/src/main.cc,$(wildcard fastText/src/*.cc))
 FT_OBJS := $(patsubst fastText/src/%.cc,$(OBJ_DIR)/ft_%.o,$(FT_SRCS))
@@ -16,11 +19,15 @@ WRAPPER_OBJ := $(OBJ_DIR)/fasttext_wrapper.o
 
 LIB := $(BUILD_DIR)/libgo_fasttext.a
 
-.PHONY: all lib clean test
+.PHONY: all lib lib-install clean test
 
 all: lib
 
 lib: $(LIB)
+
+lib-install: $(LIB)
+	mkdir -p $(LIB_INSTALL_DIR)
+	cp $(LIB) $(LIB_INSTALL_DIR)/libgo_fasttext.a
 
 $(LIB): $(FT_OBJS) $(WRAPPER_OBJ) | $(BUILD_DIR)
 	$(AR) rcs $@ $^
@@ -34,7 +41,7 @@ $(WRAPPER_OBJ): $(WRAPPER_SRC) cwrapper/fasttext_wrapper.h | $(OBJ_DIR)
 $(BUILD_DIR) $(OBJ_DIR):
 	mkdir -p $@
 
-test: lib
+test:
 	go test ./...
 
 clean:

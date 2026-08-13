@@ -2,3 +2,4 @@
 /models/
 *.o
 *.a
+!libs/**/*.a

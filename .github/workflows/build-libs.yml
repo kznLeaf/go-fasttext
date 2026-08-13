@@ -1,0 +1,119 @@
+name: Build prebuilt libs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'fastText/**'
+      - 'cwrapper/**'
+      - 'Makefile'
+      - '.github/workflows/build-libs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux_amd64
+            runner: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            cxx: g++
+            cross_packages: ''
+          - platform: linux_arm64
+            runner: ubuntu-latest
+            goos: linux
+            goarch: arm64
+            cxx: aarch64-linux-gnu-g++
+            cross_packages: g++-aarch64-linux-gnu
+          - platform: darwin_amd64
+            runner: macos-15-intel
+            goos: darwin
+            goarch: amd64
+            cxx: clang++
+            cross_packages: ''
+          - platform: darwin_arm64
+            runner: macos-latest
+            goos: darwin
+            goarch: arm64
+            cxx: clang++
+            cross_packages: ''
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install cross compiler
+        if: matrix.cross_packages != ''
+        run: sudo apt-get update && sudo apt-get install -y ${{ matrix.cross_packages }}
+
+      - name: Build static library
+        run: |
+          make lib CXX=${{ matrix.cxx }}
+          make lib-install GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CXX=${{ matrix.cxx }}
+
+      - name: Verify CGO link
+        run: |
+          if [ -n "${{ matrix.cross_packages }}" ]; then
+            test -f libs/${{ matrix.goos }}_${{ matrix.goarch }}/libgo_fasttext.a
+            file libs/${{ matrix.goos }}_${{ matrix.goarch }}/libgo_fasttext.a
+          else
+            go test -c -o /dev/null .
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libgo_fasttext_${{ matrix.platform }}
+          path: libs/${{ matrix.goos }}_${{ matrix.goarch }}/
+
+  commit:
+    name: Commit updated libs
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: libgo_fasttext_*
+
+      - name: Install libraries into repo
+        run: |
+          rm -rf libs/artifacts
+          for artifact_dir in artifacts/libgo_fasttext_*; do
+            platform="${artifact_dir##*/libgo_fasttext_}"
+            mkdir -p "libs/$platform"
+            cp "$artifact_dir/libgo_fasttext.a" "libs/$platform/libgo_fasttext.a"
+          done
+          ls -R libs/
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add libs/
+          git status
+          if git diff --staged --quiet; then
+            echo "No library changes to commit."
+          else
+            git commit -m "ci: update prebuilt libgo_fasttext.a for all platforms"
+            git pull --rebase origin main
+            git push
+          fi

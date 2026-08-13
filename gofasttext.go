@@ -4,13 +4,13 @@
 // then Predict to get the top-1 language code (without the "__label__" prefix)
 // and its confidence. Close frees the loaded model.
 //
-// Build the native library with `make lib` before using or testing this package.
+// Prebuilt static libraries for linux/darwin (amd64, arm64) are vendored under
+// libs/. On unsupported platforms, build with `make lib && make lib-install`.
 package gofasttext
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/cwrapper
 #cgo CXXFLAGS: -std=c++17 -O3 -I${SRCDIR}/cwrapper -I${SRCDIR}/fastText/src
-#cgo LDFLAGS: -L${SRCDIR}/build -lgo_fasttext -lstdc++ -lm -pthread
 #include <stdlib.h>
 #include "fasttext_wrapper.h"
 */
