@@ -4,8 +4,15 @@ CXX ?= c++
 AR ?= ar
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
+# Keep darwin objects loadable on older macOS (avoids "built for newer macOS" ld warnings).
+MACOSX_DEPLOYMENT_TARGET ?= 12.0
+export MACOSX_DEPLOYMENT_TARGET
+
 CXXFLAGS ?= -std=c++17 -O3 -fPIC -pthread -funroll-loops
 CXXFLAGS += -IfastText/src -Icwrapper
+ifeq ($(GOOS),darwin)
+CXXFLAGS += -mmacosx-version-min=$(MACOSX_DEPLOYMENT_TARGET)
+endif
 
 BUILD_DIR := build
 OBJ_DIR := $(BUILD_DIR)/obj

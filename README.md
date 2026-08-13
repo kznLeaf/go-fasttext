@@ -8,6 +8,8 @@ Go bindings for [fastText](https://github.com/facebookresearch/fastText) languag
 
 Prebuilt static libraries for **linux/darwin (amd64, arm64)** are vendored under `libs/`, so you can use the package after `go get` without compiling fastText.
 
+Darwin prebuilds target **macOS 12+** (`MACOSX_DEPLOYMENT_TARGET=12.0`) so they link cleanly on older hosts.
+
 ## Requirements
 
 - Go with CGO enabled (`CGO_ENABLED=1`, the default)

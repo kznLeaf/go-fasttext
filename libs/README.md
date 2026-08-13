@@ -14,6 +14,14 @@ libs/
 
 Directory names follow Go's `GOOS_GOARCH` convention.
 
+## Darwin deployment target
+
+Darwin archives are built with `MACOSX_DEPLOYMENT_TARGET=12.0` (macOS 12+) so consumers on newer SDKs do not hit `ld: object file was built for newer macOS` warnings. Override when rebuilding locally if needed:
+
+```sh
+MACOSX_DEPLOYMENT_TARGET=15.0 make lib
+```
+
 ## Rebuilding (maintainers)
 
 After changing `fastText/src` or `cwrapper/`:
